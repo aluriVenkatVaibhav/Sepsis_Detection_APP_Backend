@@ -1,6 +1,9 @@
-from fastapi import FastAPI
-from datetime import datetime
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timezone
+from pydantic import BaseModel
+from typing import Optional
+
 from backend.websocket.manager import manager
 
 from backend.database.queries import (
@@ -18,62 +21,87 @@ from backend.services.data_service import (
 app = FastAPI()
 
 
+# -----------------------------
+# CORS (allow mobile app access)
+# -----------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# -----------------------------
+# Pydantic model for validation
+# -----------------------------
+class SensorData(BaseModel):
+    patient_id: int
+    heart_rate: float
+    resp_rate: float
+    spo2: float
+    temperature: float
+    hrv: Optional[float] = None
+    rrv: Optional[float] = None
+    risk_score: float
+    risk_level: str
+
+
+# -----------------------------
+# Health check endpoint
+# -----------------------------
 @app.get("/")
 def root():
     return {"status": "SepsisGuard backend running"}
 
 
+# -----------------------------
+# Sensor data ingestion
+# -----------------------------
 @app.post("/sensor-data")
-async def receive_sensor_data(data: dict):
+async def receive_sensor_data(data: SensorData):
 
-    patient_id = data["patient_id"]
-
-    heart_rate = data["heart_rate"]
-    resp_rate = data["resp_rate"]
-    spo2 = data["spo2"]
-    temperature = data["temperature"]
-    hrv = data.get("hrv", None)
-    rrv = data.get("rrv", None)
-
-    risk_score = data["risk_score"]
-    risk_level = data["risk_level"]
-
-    timestamp = datetime.utcnow()
+    timestamp = datetime.now(timezone.utc)
 
     insert_sensor_data(
-        patient_id,
-        heart_rate,
-        resp_rate,
-        spo2,
-        temperature,
-        hrv,
-        rrv,
+        data.patient_id,
+        data.heart_rate,
+        data.resp_rate,
+        data.spo2,
+        data.temperature,
+        data.hrv,
+        data.rrv,
         timestamp
     )
 
     insert_prediction(
-        patient_id,
-        risk_score,
-        risk_level,
+        data.patient_id,
+        data.risk_score,
+        data.risk_level,
         timestamp
     )
-    
+
+    # Broadcast to dashboard clients
     await manager.broadcast({
-        "patient_id": patient_id,
-        "heart_rate": heart_rate,
-        "resp_rate": resp_rate,
-        "spo2": spo2,
-        "temperature": temperature,
-        "hrv": hrv,
-        "rrv": rrv,
-        "risk_score": risk_score,
-        "risk_level": risk_level,
+        "patient_id": data.patient_id,
+        "heart_rate": data.heart_rate,
+        "resp_rate": data.resp_rate,
+        "spo2": data.spo2,
+        "temperature": data.temperature,
+        "hrv": data.hrv,
+        "rrv": data.rrv,
+        "risk_score": data.risk_score,
+        "risk_level": data.risk_level,
         "timestamp": str(timestamp)
     })
 
     return {"status": "data stored"}
 
 
+# -----------------------------
+# WebSocket endpoint
+# -----------------------------
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
 
@@ -86,10 +114,17 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
+
+# -----------------------------
+# Latest vitals endpoint
+# -----------------------------
 @app.get("/latest-vitals/{patient_id}")
 def latest_vitals(patient_id: int):
 
     data = fetch_latest_vitals(patient_id)
+
+    if not data:
+        return {"error": "No data found"}
 
     return {
         "heart_rate": data[0],
@@ -100,13 +135,15 @@ def latest_vitals(patient_id: int):
         "rrv": data[5],
         "timestamp": data[6]
     }
-    
-    
+
+
+# -----------------------------
+# Timeline analytics endpoints
+# -----------------------------
 @app.get("/timeline/day/{patient_id}")
 def day_timeline(patient_id: int):
 
     data = fetch_day_timeline(patient_id)
-
     return {"data": data}
 
 
@@ -114,7 +151,6 @@ def day_timeline(patient_id: int):
 def week_timeline(patient_id: int):
 
     data = fetch_week_timeline(patient_id)
-
     return {"data": data}
 
 
@@ -122,5 +158,4 @@ def week_timeline(patient_id: int):
 def month_timeline(patient_id: int):
 
     data = fetch_month_timeline(patient_id)
-
     return {"data": data}
