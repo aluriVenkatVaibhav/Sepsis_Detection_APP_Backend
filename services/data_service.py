@@ -1,10 +1,9 @@
-from backend.database.queries import (
+from database.queries import (
     get_latest_vitals,
     get_day_timeline,
     get_week_timeline,
     get_month_timeline
 )
-
 
 def fetch_latest_vitals(patient_id):
     return get_latest_vitals(patient_id)
