@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel
 from typing import Optional
 
-from ..websocket.manager import manager
+from websocket.manager import manager
 
 from database.queries import (
     insert_sensor_data,
