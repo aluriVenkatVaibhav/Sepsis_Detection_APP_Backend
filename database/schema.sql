@@ -17,16 +17,17 @@ CREATE TABLE IF NOT EXISTS patients (
 -- Sensor data table (time-series)
 --------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS sensor_data (
+CREATE TABLE sensor_data (
     id SERIAL,
-    patient_id INT REFERENCES patients(patient_id),
+    patient_id INTEGER NOT NULL,
 
-    heart_rate FLOAT,
-    resp_rate FLOAT,
-    spo2 FLOAT,
-    temperature FLOAT,
-    hrv FLOAT,
-    rrv FLOAT,
+    heart_rate DOUBLE PRECISION,
+    resp_rate DOUBLE PRECISION,
+    temperature DOUBLE PRECISION,
+    spo2 DOUBLE PRECISION,
+
+    hrv DOUBLE PRECISION,
+    rrv DOUBLE PRECISION,
 
     timestamp TIMESTAMPTZ NOT NULL,
 
@@ -43,12 +44,12 @@ SELECT create_hypertable('sensor_data', 'timestamp', if_not_exists => TRUE);
 -- Predictions table
 --------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS predictions (
-    id SERIAL PRIMARY KEY,
-    patient_id INT REFERENCES patients(patient_id),
+CREATE TABLE predictions (
+    patient_id INTEGER NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL,
 
-    risk_score FLOAT,
+    risk_score DOUBLE PRECISION,
     risk_level TEXT,
 
-    timestamp TIMESTAMPTZ DEFAULT NOW()
+    PRIMARY KEY (patient_id, timestamp)
 );

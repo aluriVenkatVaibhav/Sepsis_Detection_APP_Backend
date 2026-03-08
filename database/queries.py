@@ -98,7 +98,9 @@ def get_day_timeline(patient_id):
             AVG(heart_rate),
             AVG(spo2),
             AVG(temperature),
-            AVG(resp_rate)
+            AVG(resp_rate),
+            AVG(hrv),
+            AVG(rrv)
         FROM sensor_data
         WHERE patient_id = %s
         AND timestamp > NOW() - INTERVAL '1 day'
@@ -128,7 +130,9 @@ def get_week_timeline(patient_id):
             AVG(heart_rate),
             AVG(spo2),
             AVG(temperature),
-            AVG(resp_rate)
+            AVG(resp_rate),
+            AVG(hrv),
+            AVG(rrv)
         FROM sensor_data
         WHERE patient_id = %s
         AND timestamp > NOW() - INTERVAL '7 days'
@@ -158,7 +162,9 @@ def get_month_timeline(patient_id):
             AVG(heart_rate),
             AVG(spo2),
             AVG(temperature),
-            AVG(resp_rate)
+            AVG(resp_rate),
+            AVG(hrv),
+            AVG(rrv)
         FROM sensor_data
         WHERE patient_id = %s
         AND timestamp > NOW() - INTERVAL '30 days'
