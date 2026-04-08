@@ -4,14 +4,14 @@ from datetime import datetime, timezone
 from pydantic import BaseModel
 from typing import Optional
 
-from backend.websocket.manager import manager
+from websocket.manager import manager
 
-from backend.database.queries import (
+from database.queries import (
     insert_sensor_data,
     insert_prediction
 )
 
-from backend.services.data_service import (
+from services.data_service import (
     fetch_latest_vitals,
     fetch_day_timeline,
     fetch_week_timeline,
