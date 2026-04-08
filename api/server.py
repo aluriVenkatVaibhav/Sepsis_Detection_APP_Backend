@@ -38,14 +38,13 @@ app.add_middleware(
 # -----------------------------
 class SensorData(BaseModel):
     patient_id: int
-    heart_rate: float
-    resp_rate: float
+    hr: float
+    temp: float
+    rr: float
     spo2: float
-    temperature: float
     hrv: Optional[float] = None
     rrv: Optional[float] = None
-    risk_score: float
-    risk_level: str
+    movement: float
 
 
 # -----------------------------
@@ -66,33 +65,34 @@ async def receive_sensor_data(data: SensorData):
 
     insert_sensor_data(
         data.patient_id,
-        data.heart_rate,
-        data.resp_rate,
+        data.hr,
+        data.temp,
+        data.rr,
         data.spo2,
-        data.temperature,
         data.hrv,
         data.rrv,
+        data.movement,
         timestamp
     )
 
     insert_prediction(
         data.patient_id,
-        data.risk_score,
-        data.risk_level,
-        timestamp
+        False,              # predicted_sepsis
+        0.0,                # current_risk_score
+        [],                 # risk_scores
+        []                  # timestamps
     )
 
     # Broadcast to dashboard clients
     await manager.broadcast({
         "patient_id": data.patient_id,
-        "heart_rate": data.heart_rate,
-        "resp_rate": data.resp_rate,
+        "hr": data.hr,
+        "rr": data.rr,
         "spo2": data.spo2,
-        "temperature": data.temperature,
+        "temp": data.temp,
         "hrv": data.hrv,
         "rrv": data.rrv,
-        "risk_score": data.risk_score,
-        "risk_level": data.risk_level,
+        "movement": data.movement,
         "timestamp": str(timestamp)
     })
 
@@ -127,10 +127,10 @@ def latest_vitals(patient_id: int):
         return {"error": "No data found"}
 
     return {
-        "heart_rate": data[0],
-        "resp_rate": data[1],
+        "hr": data[0],
+        "rr": data[1],
         "spo2": data[2],
-        "temperature": data[3],
+        "temp": data[3],
         "hrv": data[4],
         "rrv": data[5],
         "timestamp": data[6]
