@@ -93,7 +93,7 @@ def get_day_timeline(patient_id):
     cur.execute(
         """
         SELECT
-            time_bucket('1 minute', timestamp) AS bucket,
+            time_bucket('5 minutes', timestamp) AS bucket,
             AVG(hr),
             AVG(spo2),
             AVG(temp),
@@ -125,7 +125,7 @@ def get_week_timeline(patient_id):
     cur.execute(
         """
         SELECT
-            time_bucket('10 minutes', timestamp) AS bucket,
+            time_bucket('30 minutes', timestamp) AS bucket,
             AVG(hr),
             AVG(spo2),
             AVG(temp),
@@ -157,7 +157,7 @@ def get_month_timeline(patient_id):
     cur.execute(
         """
         SELECT
-            time_bucket('1 hour', timestamp) AS bucket,
+            time_bucket('1 hours', timestamp) AS bucket,
             AVG(hr),
             AVG(spo2),
             AVG(temp),
