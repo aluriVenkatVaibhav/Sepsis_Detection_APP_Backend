@@ -9,15 +9,15 @@ from ml.vitals_types import (
     MILD_STRESS_MILD_PROB, MILD_STRESS_ANOMALY,
     W_RF, W_ANOMALY, W_QSOFA, W_TRAJ, W_CORR
 )
-from baseline_establishment import BaselineEstablishment
-from derivatives import DerivativeTracker
-from anomaly_scoring import AnomalyScorer
-from feature_engine import (
+from ml.baseline_establishment import BaselineEstablishment
+from ml.derivatives import DerivativeTracker
+from ml.anomaly_scoring import AnomalyScorer
+from ml.feature_engine import (
     hrv_collapse_severity, immobility_score, lactate_proxy,
     multi_system_correlation, temp_trajectory,
     feature_engine_sepsis_accel, phase_detection
 )
-from correlation_analyzer import SepsisCorrelationAnalyzer
+from ml.correlation_analyzer import SepsisCorrelationAnalyzer
 
 logger = logging.getLogger(__name__)
 
