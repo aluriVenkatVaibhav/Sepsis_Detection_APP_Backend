@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Dict, Tuple
 from sklearn.ensemble import IsolationForest
-from vitals_types import VitalsSample, BaselineData
+from ml.vitals_types import VitalsSample, BaselineData
 
 # Minimum monitoring windows before personal IF contributes to anomaly score.
 IF_MIN_WINDOWS: int = 20

@@ -1,6 +1,6 @@
 import datetime
 import numpy as np
-from vitals_types import VitalsSample, WINDOW_SECONDS
+from ml.vitals_types import VitalsSample, WINDOW_SECONDS
 
 class PatientStreamSimulator:
     """Generates realistic physiological data for Normal, Infection, and Sepsis states."""

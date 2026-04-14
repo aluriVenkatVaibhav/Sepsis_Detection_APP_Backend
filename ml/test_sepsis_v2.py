@@ -24,7 +24,7 @@ import numpy as np
 from types import SimpleNamespace
 
 # Modular Imports
-from vitals_types import VitalsSample, BaselineData, VITALS, BASELINE_WINDOWS
+from ml.vitals_types import VitalsSample, BaselineData, VITALS, BASELINE_WINDOWS
 from baseline_establishment import BaselineEstablishment
 from sepsis_detector import SepsisDetector
 from anomaly_scoring import AnomalyScorer

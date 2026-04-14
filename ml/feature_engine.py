@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Dict, List, Optional, Tuple
-from vitals_types import VitalsSample, VITALS
+from ml.vitals_types import VitalsSample, VITALS
 
 def hrv_collapse_severity(hrv_history: List[float]) -> float:
     """Detect sustained collapse in HRV (0.0-1.0)."""

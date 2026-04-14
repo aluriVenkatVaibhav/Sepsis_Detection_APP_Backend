@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Optional, Tuple
-from vitals_types import VITALS
+from ml.vitals_types import VITALS
 
 class SepsisCorrelationAnalyzer:
     """

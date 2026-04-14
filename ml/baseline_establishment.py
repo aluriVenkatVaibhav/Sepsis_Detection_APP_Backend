@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Optional, Tuple
 from sklearn.ensemble import IsolationForest
-from vitals_types import VitalsSample, BaselineData, VITALS, BASELINE_WINDOWS, CONFIDENCE_HIGH, CONFIDENCE_MID
+from ml.vitals_types import VitalsSample, BaselineData, VITALS, BASELINE_WINDOWS, CONFIDENCE_HIGH, CONFIDENCE_MID
 
 logger = logging.getLogger(__name__)
 

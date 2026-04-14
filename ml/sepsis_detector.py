@@ -3,7 +3,7 @@ import logging
 from typing import Dict, List, Optional, Tuple
 from sklearn.ensemble import RandomForestClassifier, IsolationForest
 
-from vitals_types import (
+from ml.vitals_types import (
     VitalsSample, BaselineData, VITALS, BASELINE_WINDOWS, MAX_HISTORY,
     STATUS_CRITICAL_THRESH, STATUS_HIGH_RISK_THRESH, RF_HIGH_RISK_THRESH,
     MILD_STRESS_MILD_PROB, MILD_STRESS_ANOMALY,

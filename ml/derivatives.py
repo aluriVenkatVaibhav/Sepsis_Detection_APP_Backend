@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional, Tuple
-from vitals_types import VitalsSample, VITALS, WINDOW_SECONDS
+from ml.vitals_types import VitalsSample, VITALS, WINDOW_SECONDS
 
 class DerivativeTracker:
     """
