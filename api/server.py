@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from pydantic import BaseModel
 from typing import Optional
+from services.ml_service import process_vitals
 
 from websocket.manager import manager
 
@@ -75,13 +76,23 @@ async def receive_sensor_data(data: SensorData):
         timestamp
     )
 
-    insert_prediction(
-        data.patient_id,
-        False,              # predicted_sepsis
-        0.0,                # current_risk_score
-        [],                 # risk_scores
-        []                  # timestamps
-    )
+    # -----------------------------
+    # Run ML model
+    # -----------------------------
+    ml_result = process_vitals(data)
+
+    # -----------------------------
+    # Store prediction ONLY if monitoring phase
+    # -----------------------------
+    if ml_result["phase"] == "MONITORING":
+        insert_prediction(
+            data.patient_id,
+            ml_result["status"] in ["HIGH_RISK", "CRITICAL"],
+            ml_result["score"],
+            [ml_result["score"]],
+            [timestamp]
+        )
+    
 
     # Broadcast to dashboard clients
     await manager.broadcast({
@@ -90,13 +101,17 @@ async def receive_sensor_data(data: SensorData):
         "rr": data.rr,
         "spo2": data.spo2,
         "temp": data.temp,
-        "hrv": data.hrv,
-        "rrv": data.rrv,
+        "hrv": data.hrv or 0.0,
+        "rrv": data.rrv or 0.0,
         "movement": data.movement,
-        "timestamp": str(timestamp)
+        "timestamp": str(timestamp),
+        "ml": ml_result
     })
 
-    return {"status": "data stored"}
+    return {
+        "message": "data processed",
+        "ml": ml_result
+    }
 
 
 # -----------------------------
