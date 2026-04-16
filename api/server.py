@@ -7,6 +7,11 @@ from services.ml_service import process_vitals
 
 from websocket.manager import manager
 
+from state.patient_state import patient_states
+from state.storage import load_baseline, load_model
+from routes.train import router as train_router
+from ml.vitals_types import VitalsSample
+
 from database.queries import (
     insert_sensor_data,
     insert_prediction
@@ -33,6 +38,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(train_router)
 
 # -----------------------------
 # Pydantic model for validation
@@ -46,6 +52,8 @@ class SensorData(BaseModel):
     hrv: Optional[float] = None
     rrv: Optional[float] = None
     movement: float
+    # Timestamp sent by the client (used for derivative timing / window alignment)
+    timestamp: Optional[datetime] = None
 
 
 # -----------------------------
@@ -62,7 +70,7 @@ def root():
 @app.post("/sensor-data")
 async def receive_sensor_data(data: SensorData):
 
-    timestamp = datetime.now(timezone.utc)
+    timestamp = data.timestamp or datetime.now(timezone.utc)
 
     insert_sensor_data(
         data.patient_id,
@@ -79,7 +87,63 @@ async def receive_sensor_data(data: SensorData):
     # -----------------------------
     # Run ML model
     # -----------------------------
-    ml_result = process_vitals(data)
+    state = patient_states[data.patient_id]
+
+    # -----------------------------------
+    # TRAIN MODE
+    # -----------------------------------
+    if state.mode == "TRAIN":
+        
+
+        sample = VitalsSample(
+                timestamp=timestamp,
+                hr=data.hr,
+                rr=data.rr,
+                spo2=data.spo2,
+                temp=data.temp,
+                movement=data.movement,
+                hrv=data.hrv or 0.0,
+                rrv=data.rrv or 0.0
+            )
+
+        state.buffer.append(sample)
+
+        return {
+            "message": "collecting training data",
+            "status": "TRAINING",
+            "windows_collected": len(state.buffer)
+        }
+
+    # -----------------------------------
+    # LOAD BASELINE + MODEL (once)
+    # -----------------------------------
+    if state.baseline is None:
+        state.baseline = load_baseline(data.patient_id)
+
+    if state.model is None:
+        state.model = load_model(data.patient_id)
+
+    # -----------------------------------
+    # NO BASELINE → BLOCK MONITORING
+    # -----------------------------------
+    if state.baseline is None:
+        return {
+            "error": "No baseline found. Please press TRAIN first."
+        }
+
+    if state.model is None:
+        return {
+            "error": "No personal model found. Please press TRAIN first."
+        }
+
+    # -----------------------------------
+    # MONITOR MODE
+    # -----------------------------------
+    ml_result = process_vitals(
+        data,
+        baseline=state.baseline,
+        personal_model=state.model
+    )
 
     # -----------------------------
     # Store prediction ONLY if monitoring phase
@@ -88,8 +152,8 @@ async def receive_sensor_data(data: SensorData):
         insert_prediction(
             data.patient_id,
             ml_result["status"] in ["HIGH_RISK", "CRITICAL"],
-            ml_result["score"],
-            [ml_result["score"]],
+            ml_result["final_score"],
+            [ml_result["final_score"]],
             [timestamp]
         )
     
@@ -148,7 +212,8 @@ def latest_vitals(patient_id: int):
         "temp": data[3],
         "hrv": data[4],
         "rrv": data[5],
-        "timestamp": data[6]
+        "movement": data[6],
+        "timestamp": data[7]
     }
 
 

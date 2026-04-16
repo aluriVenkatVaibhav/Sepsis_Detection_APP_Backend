@@ -60,7 +60,26 @@ class SepsisDetector:
     @property
     def baseline_locked(self) -> bool:
         return self._baseline is not None
+    
+    def load_baseline(self, baseline: BaselineData, personal_if: IsolationForest):
+        """
+        Inject externally trained baseline and personal model
+        """
+        self._baseline = baseline
+        self._scorer = AnomalyScorer(baseline, personal_if, self._pop_if)
 
+        self._locked_means = dict(baseline.baseline_means)
+        self._drift_means = dict(baseline.baseline_means)
+
+    def set_personal_model(self, personal_if: IsolationForest):
+        """
+        Update personal Isolation Forest without rebuilding baseline
+        """
+        if self._baseline is None:
+            raise RuntimeError("Baseline must be loaded before setting model")
+
+        self._scorer = AnomalyScorer(self._baseline, personal_if, self._pop_if)
+    
     def add_baseline_window(self, sample: VitalsSample) -> Optional[BaselineData]:
         result = self._baseline_est.add_window(sample)
         if result:
@@ -72,7 +91,7 @@ class SepsisDetector:
 
     def process_monitoring_window(self, sample: VitalsSample) -> Dict:
         if not self.baseline_locked:
-            raise RuntimeError("Baseline not locked. Submit 5 windows first.")
+            raise RuntimeError("Baseline not loaded. Please train first.")
 
         self._window_count += 1
         baseline = self._baseline
@@ -172,6 +191,13 @@ class SepsisDetector:
         # Verdict
         sepsis_phase = phase_detection(final_score, hr=sample.hr, spo2=sample.spo2, hrv_collapse=hrv_sev)
 
+        # 🔥 ALIGN PHASE WITH STATUS (override if needed)
+        if status == "HIGH_RISK" and sepsis_phase == "PHASE_0_NORMAL":
+            sepsis_phase = "PHASE_1_EARLY"
+
+        if status == "CRITICAL":
+            sepsis_phase = "PHASE_3_SEPTIC_SHOCK"
+        
         # ---- Build output dict ----------------------------------------------
         output = {
             "phase": "MONITORING",

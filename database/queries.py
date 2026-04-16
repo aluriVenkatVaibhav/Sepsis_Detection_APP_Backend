@@ -68,7 +68,7 @@ def get_latest_vitals(patient_id):
 
     cur.execute(
         """
-        SELECT hr, rr, spo2, temp, hrv, rrv, timestamp
+        SELECT hr, rr, spo2, temp, hrv, rrv, movement, timestamp
         FROM sensor_data
         WHERE patient_id = %s
         ORDER BY timestamp DESC
