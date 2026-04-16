@@ -21,7 +21,10 @@ from services.data_service import (
     fetch_latest_vitals,
     fetch_day_timeline,
     fetch_week_timeline,
-    fetch_month_timeline
+    fetch_month_timeline,
+    fetch_day_prediction_timeline,
+    fetch_week_prediction_timeline,
+    fetch_month_prediction_timeline,
 )
 
 app = FastAPI()
@@ -54,6 +57,7 @@ class SensorData(BaseModel):
     movement: float
     # Timestamp sent by the client (used for derivative timing / window alignment)
     timestamp: Optional[datetime] = None
+    packet_seq: Optional[int] = None
 
 
 # -----------------------------
@@ -71,6 +75,20 @@ def root():
 async def receive_sensor_data(data: SensorData):
 
     timestamp = data.timestamp or datetime.now(timezone.utc)
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=timezone.utc)
+    state = patient_states[data.patient_id]
+    packet_key = (
+        f"{data.patient_id}:"
+        f"{data.packet_seq if data.packet_seq is not None else timestamp.isoformat()}:"
+        f"{round(data.hr, 3)}:{round(data.rr, 3)}:{round(data.spo2, 3)}:{round(data.temp, 3)}"
+    )
+    if state.is_duplicate_packet(packet_key):
+        return {
+            "message": "duplicate packet ignored",
+            "status": "DUPLICATE_IGNORED",
+        }
+    state.remember_packet(packet_key)
 
     insert_sensor_data(
         data.patient_id,
@@ -87,7 +105,7 @@ async def receive_sensor_data(data: SensorData):
     # -----------------------------
     # Run ML model
     # -----------------------------
-    state = patient_states[data.patient_id]
+    state.last_updated = datetime.now(timezone.utc).timestamp()
 
     # -----------------------------------
     # TRAIN MODE
@@ -238,4 +256,22 @@ def week_timeline(patient_id: int):
 def month_timeline(patient_id: int):
 
     data = fetch_month_timeline(patient_id)
+    return {"data": data}
+
+
+@app.get("/prediction-timeline/day/{patient_id}")
+def day_prediction_timeline(patient_id: int):
+    data = fetch_day_prediction_timeline(patient_id)
+    return {"data": data}
+
+
+@app.get("/prediction-timeline/week/{patient_id}")
+def week_prediction_timeline(patient_id: int):
+    data = fetch_week_prediction_timeline(patient_id)
+    return {"data": data}
+
+
+@app.get("/prediction-timeline/month/{patient_id}")
+def month_prediction_timeline(patient_id: int):
+    data = fetch_month_prediction_timeline(patient_id)
     return {"data": data}

@@ -179,3 +179,75 @@ def get_month_timeline(patient_id):
     conn.close()
 
     return results
+
+
+def get_day_prediction_timeline(patient_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT
+            time_bucket('5 minutes', timestamp) AS bucket,
+            AVG(current_risk_score)
+        FROM predictions
+        WHERE patient_id = %s
+          AND timestamp > NOW() - INTERVAL '1 day'
+        GROUP BY bucket
+        ORDER BY bucket
+        """,
+        (patient_id,)
+    )
+
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    return results
+
+
+def get_week_prediction_timeline(patient_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT
+            time_bucket('30 minutes', timestamp) AS bucket,
+            AVG(current_risk_score)
+        FROM predictions
+        WHERE patient_id = %s
+          AND timestamp > NOW() - INTERVAL '7 days'
+        GROUP BY bucket
+        ORDER BY bucket
+        """,
+        (patient_id,)
+    )
+
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    return results
+
+
+def get_month_prediction_timeline(patient_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT
+            time_bucket('1 hours', timestamp) AS bucket,
+            AVG(current_risk_score)
+        FROM predictions
+        WHERE patient_id = %s
+          AND timestamp > NOW() - INTERVAL '30 days'
+        GROUP BY bucket
+        ORDER BY bucket
+        """,
+        (patient_id,)
+    )
+
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    return results

@@ -42,5 +42,7 @@ def process_vitals(data, baseline=None, personal_model=None):
         "status": output["status"],
         "final_score": output["final_score"],
         "sepsis_phase": output["sepsis_phase"],
+        "baseline_confidence": output.get("baseline_confidence"),
+        "baseline_state": output.get("baseline_state"),
         "full_output": output
     }
