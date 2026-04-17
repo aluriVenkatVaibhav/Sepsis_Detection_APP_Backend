@@ -4,7 +4,7 @@ from sklearn.ensemble import IsolationForest
 from ml.vitals_types import VitalsSample, BaselineData
 
 # Minimum monitoring windows before personal IF contributes to anomaly score.
-IF_MIN_WINDOWS: int = 20
+IF_MIN_WINDOWS: int = 10
 
 class AnomalyScorer:
     """

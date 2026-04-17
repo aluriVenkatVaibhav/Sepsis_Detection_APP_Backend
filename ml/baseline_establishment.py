@@ -94,7 +94,10 @@ class BaselineEstablishment:
             confidence=round(self.confidence_score, 1),
             confidence_breakdown=self.breakdown,
             baseline_means={v: float(df[v].mean()) for v in VITALS},
-            baseline_stds={v: float(df[v].std()) if df[v].std() > 0 else 0.1 for v in VITALS},
+            baseline_stds={
+                v: max(float(df[v].std()), 1.0)
+                for v in VITALS
+            },
             locked_at=datetime.datetime.now()
         )
 

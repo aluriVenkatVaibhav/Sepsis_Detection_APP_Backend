@@ -3,15 +3,22 @@ from state.patient_state import patient_states
 
 router = APIRouter()
 
+from pydantic import BaseModel
+
+class TrainRequest(BaseModel):
+    patient_id: int
+
 @router.post("/train-start")
-def start_training(patient_id: int):
+def start_training(req: TrainRequest):
+    patient_id = req.patient_id
     state = patient_states[patient_id]
     state.mode = "TRAIN"
     state.buffer = []
     return {"status": "TRAINING_STARTED"}
 
 @router.post("/train-stop")
-def stop_training(patient_id: int):
+def stop_training(req: TrainRequest):
+    patient_id = req.patient_id
     state = patient_states[patient_id]
 
     if len(state.buffer) < 5:

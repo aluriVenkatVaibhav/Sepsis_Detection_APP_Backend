@@ -18,12 +18,12 @@ VITAL_LIMITS = {
 
 # Window configuration
 WINDOW_SECONDS: int = 40
-BASELINE_WINDOWS: int = 5
+BASELINE_WINDOWS: int = 10
 MAX_HISTORY: int = 360  # 4 hours at 40-second windows
 
 # Revised Score weights (sum = 1.0)
 W_RF: float = 0.40
-W_ANOMALY: float = 0.25
+W_ANOMALY: float = 0.15
 W_QSOFA: float = 0.15
 W_TRAJ: float = 0.10
 W_CORR: float = 0.10
@@ -32,7 +32,7 @@ W_CORR: float = 0.10
 CONFIDENCE_HIGH = 75.0
 CONFIDENCE_MID = 60.0
 STATUS_CRITICAL_THRESH = 0.65
-STATUS_HIGH_RISK_THRESH = 0.40
+STATUS_HIGH_RISK_THRESH = 0.55
 RF_HIGH_RISK_THRESH = 0.40
 MILD_STRESS_MILD_PROB = 0.50
 MILD_STRESS_ANOMALY = 50.0
